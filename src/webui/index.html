@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>PJSUA Control</title>
+
+		<link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.css">
+		<link rel="stylesheet" type="text/css" href="stylesheets/theme.css">
+
+		<script src="lib/jquery-1.8.1.min.js" type="text/javascript"></script>
+	</head>
+
+	<script>
+		config = {
+			PJSUA_Host : "localhost:9002"
+		};
+
+		function Reload_UI() {
+			$("#account_refresh").click();
+			$("#call_list_refresh").click();
+			setTimeout(Reload_UI,1000);
+		}
+
+		function Initialize() {
+			Reload_UI();
+		}
+
+		function notify_error(message) {
+			console.log(message);
+			var div = $("<div>").addClass("alert alert-error").append($('<strong>').text(message));
+			var button = $("<button>").addClass("close").attr('data-dismiss', 'alert').text('x');
+
+			$('#notifications').prepend(div.append(button));
+			setTimeout(function() {
+				$('#notifications').children().last().remove();
+			}, 3000);
+		}
+
+
+		$(document).ready(Initialize);
+	</script>
+
+	<body class="">
+
+		<div class="content">
+
+			<div class="header">
+				<div class="stats">
+					<p class="stat">
+						<span class="number">0</span>accounts connected
+					</p>
+					<p class="stat">
+						<span class="number">0</span>current calls
+					</p>
+				</div>
+
+				<h1 class="page-title">PJSUA Dashboard</h1>
+			</div>
+
+			<div class="container-fluid">
+				<div class="row-fluid">
+
+					<div class="row-fluid" id="notifications"> </div>
+
+					<div class="row-fluid">
+						<div class="block span6">
+							<div class="block-heading">
+								<span class="block-icon pull-right"> <a href="#" class="demo-cancel-click" id="account_refresh" rel="tooltip" title="Click to refresh"> <i class="icon-refresh"> </i> </a></span>
+								<script type="text/javascript">
+									$("#account_refresh").click(function() {
+										console.log("updating.");
+										$.ajax({
+											url : "http://localhost:9002/account/list",
+											context : document.body,
+											dataType : 'json'
+										}).done(function(data) {
+											$('#account_status').empty();
+											var html = '';
+											for (var i = 0; i < data.length; i++) {
+												console.log(data[i]);
+
+												var row = $('<tr>');
+												$('<td>').text(data[i].account).appendTo(row);
+												var status = $('<td>').text('Unknown').appendTo(row);
+
+												if (data[i].info) {
+													status.text(data[i].info.reg_status + ' (' + data[i].info.reg_reason + ')');
+												}
+
+												var button_td = $('<td>');
+												var button = $('<button>').attr('id', 'account_' + data[i].id).addClass("btn").text("Connect").appendTo(button_td);
+												button_td.appendTo(row);
+
+												button.click(function() {
+													var id = $(this).parent().siblings().first().text();
+													var button = $(this);
+
+													button.prop('disabled', true);
+													button.text('Connecting..');
+
+													console.log("registrering account" + id);
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/account/register?account=' + id,
+														dataType : 'json',
+														statusCode : {
+															404 : function() {
+																notify_error("Could not connect to account " + id + ". 404 Not found");
+															},
+															503 : function(data) {
+																json = JSON.parse(data.responseText);
+																notify_error("Could not add account. Error:" + json.message);
+															}
+														}
+
+													}).always(function(data) {
+														console.log("Done!");
+														button.prop('disabled', false);
+														button.text('Connect');
+														$("#call_list_refresh").click();
+													});
+												});
+												$('#account_status').append(row);
+											}
+
+										});
+									});
+								</script>
+								<a href="#widget2container">Account</a><span class="label label-warning">0 connected</span>
+							</div>
+
+							<div id="accounts" class="block-body collapse in">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>Account</th>
+											<th>Status</th>
+											<th> </th>
+										</tr>
+									</thead>
+									<tbody id="account_status"> </tbody>
+								</table>
+							</div>
+						</div>
+
+						<div class="block span4">
+							<a href="#tablewidget" class="block-heading" >Available accounts </a>
+
+							<div id="some_widget" class="block-body collapse in">
+								<table class="table list">
+									<tbody>
+										<tr>
+											<td><span>1000@raspberrypi</span></td>
+											<td><a id="account_1_add" class="btn">Add</a></td>
+											<script type="text/javascript">
+												$("#account_1_add").click(function() {
+													console.log("fetching.");
+
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/account/add?username=1000&password=1234&domain=raspberrypi',
+														context : document.body,
+														statusCode : {
+															404 : function() {
+																notify_error("Could not add account. 404 Not found");
+															},
+															400 : function(data) {
+																json = JSON.parse(data.responseText);
+																notify_error("Could not add account. Bad request:" + json.message);
+															}
+														}
+													}).done(function(data) {
+														console.log(data);
+													});
+												});
+											</script>
+										</tr>
+										<tr>
+											<td><span>1000@responsum.pbx.jay.net</span></td>
+											<td><a id="account_2_add" class="btn">Add</a></td>
+											<script type="text/javascript">
+												$("#account_2_add").click(function() {
+													console.log("fetching.");
+
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/account/add?username=1000&password=1234&domain=responsum.pbx.jay.net',
+														context : document.body,
+														statusCode : {
+															404 : function() {
+																alert("page not found");
+															}
+														}
+													}).done(function(data) {
+														console.log(data);
+														$("#account_refresh").click();
+
+													});
+												});
+											</script>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="row-fluid">
+
+						<div class="block span10">
+							<div class="block-heading">
+								<span class="block-icon pull-right"> <a href="#" id="call_list_refresh" rel="tooltip" title="Click to refresh"> <i class="icon-refresh"> </i> </a></span>
+								<script type="text/javascript">
+									$("#call_list_refresh").click(function() {
+										$.ajax({
+										url : 'http://' + config.PJSUA_Host + '/call/list',
+										context : document.body,
+										dataType : 'json'
+										}).
+										done(function(data) {
+											$('#calls_status').empty();
+											var html = '';
+											for (var i = 0; i < data.length; i++) {
+
+												var row = $('<tr>');
+												$('<td>').text(data[i].call_id).appendTo(row);
+												$('<td>').text(data[i].state_text).appendTo(row);
+												$('<td>').text(data[i].media_state).appendTo(row);
+												$('<td>').text(data[i].direction).appendTo(row);
+												
+												var answer_btn = $('<button>').addClass("btn").text("Answer");
+												$('<td>').append(answer_btn).appendTo(row);
+												if (data[i].media_state !== "NULL") {
+													answer_btn.prop('disabled', true);
+												}
+												
+												var hold_btn = $('<button>').addClass("btn").text("Park");
+												$('<td>').append(hold_btn).appendTo(row);
+
+												var hangup_btn = $('<button>').addClass("btn").text("Hangup");
+												if (data[i].state === 2) {
+												hangup_btn.text("Reject");
+													
+												}
+												
+												$('<td>').append(hangup_btn).appendTo(row);
+
+												var transfer_btn = $('<button>').addClass("btn").text("Transfer");
+												$('<td>').append(transfer_btn).appendTo(row);
+
+												if (data[i].info) {
+													state.text(data[i].state_text);
+												}
+
+												transfer_btn.click(function() {
+													var call_id = $(this).parent().siblings().first().text();
+													var $this   = $(this);
+
+													$this.prop('disabled', true);
+													$this.text('Transferring..');
+
+													console.log("Transferring " + call_id);
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/call/transfer?call_id=' + call_id,
+														dataType : 'json'
+													}).always(function(data) {
+														$("#call_refresh").click();
+														$this.text('Hung up.').prop('disabled', true);
+													}).success(function() {
+														setTimeout(function() {$("#call_list_refresh").click();},200);
+													});
+												});
+
+												hangup_btn.click(function() {
+													var call_id = $(this).parent().siblings().first().text();
+
+													$(this).prop('disabled', true);
+													hangup_btn.text('Hanging up..');
+
+													console.log("answering" + call_id);
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/call/hangup?call_id=' + call_id,
+														dataType : 'json'
+													}).always(function(data) {
+														$("#call_refresh").click();
+														hangup_btn.text('Hung up.').prop('disabled', true);
+													}).success(function() {
+														setTimeout(function() 
+														{ 
+															$("#call_list_refresh").click();
+															}
+														,200);
+													});
+												});										
+
+												hold_btn.click(function() {
+													var $this = $(this); 
+													
+													$this.prop('disabled', true);
+
+													var call_id = $(this).parent().siblings().first().text();
+													var url;
+													if ($this.text() === "Park") {
+														url = 'http://' + config.PJSUA_Host + '/call/park?call_id=' + call_id;
+														$this.text('Parking..');
+													} else {
+														url = 'http://' + config.PJSUA_Host + '/call/release?call_id=' + call_id;
+														$this.text('Releasing..');
+													}
+
+													$.ajax({
+														url : url,
+														dataType : 'json'
+													}).always(function(data) {
+														hold_btn.prop('disabled', false);
+														} 
+													).success(function() {
+														if (hold_btn.text() === "Parking..") {
+															console.log("Parking done!");
+															hold_btn.text('Release');
+														} else {
+															console.log("Release done!");
+															hold_btn.text('Park');
+														}
+														setTimeout(function() { $("#call_list_refresh").click();}, 200);
+													});
+												});
+
+												answer_btn.click(function() {
+													var call_id = $(this).parent().siblings().first().text();
+
+													$(this).prop('disabled', true);
+													answer_btn.text('Answering..');
+
+													console.log("answering" + call_id);
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/call/answer?call_id=' + call_id,
+														dataType : 'json'
+													}).always(function(data) {
+														console.log("Done!");
+														answer_btn.prop('disabled', false);
+														answer_btn.text('Connect');
+													}).success(function() {
+														setTimeout(function() { $("#call_list_refresh").click();}, 200);
+													});
+												});
+												$('#calls_status').append(row);
+
+											}
+
+										});
+									});
+								</script>
+								<a href="#widget2container">Calls</a><span class="label label-warning">0 call(s)</span>
+							</div>
+
+							<div class="row-fluid">
+								<div id="calls" class="block-body collapse in">
+									<table class="table list">
+										<thead>
+											<th>Call</th>
+											<th>Status</th>
+											<th>Media status</th>
+											<th>Direction</th>
+											<th> </th>
+											<th> </th>
+										</thead>
+										<tbody id="calls_status"> </tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<footer>
+					<hr>
+					<p class="pull-right">
+						Sometext
+					</p>
+
+					<p>
+						&copy; 2013 <a href="#" target="_blank">Someone</a>
+					</p>
+				</footer>
+
+			</div>
+		</div>
+
+		<script src="lib/bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript">
+			$("[rel=tooltip]").tooltip();
+			$(function() {
+				$('.demo-cancel-click').click(function() {
+					return false;
+				});
+			});
+		</script>
+
+	</body>
+</html>
+
+}

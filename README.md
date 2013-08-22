@@ -13,6 +13,12 @@ The following command should take care of the dependencies on Debian/Ubuntu
  sudo apt-get install python-pip libasound2-dev && \
  sudo pip install twisted-web2
 
+### WebUI Requirements
+ - jQuery
+ - Bootstrap.js
+
+Both should be placed in lib/ of the webroot.
+
 ## Build instruction
 
 Start by building the PJSIP/PJSUA library and the corresponding Python egg.
