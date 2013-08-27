@@ -3,7 +3,7 @@ PBX_Host = "raspberrpi"
 class Client:
     auto_answer = False
     call_limit  = True #Limits the number of calls a client can have to one.
-    next_call_extension = 5900
+    next_call_extension = 5901
 
 class PBX:
     host     = "raspberrypi"
