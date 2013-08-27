@@ -30,6 +30,9 @@ class CallEventHandler(pj.CallCallback):
 
     # Notification when call state has changed
     def on_state(self):
+        if not self.sip._callList.has_key(self.call.info().sip_call_id):
+            self.sip._callList[self.call.info().sip_call_id] = self.call
+            
         print "callstatechange: " + str(self.call.info().state) + " " + self.call.info().state_text 
         if self.call.info().state == pj.CallState.DISCONNECTED:
             del self.sip._callList[self.call.info().sip_call_id]
@@ -112,6 +115,26 @@ class Sip():
         _pjsua_config         = None
         _accountCallback      = None
 
+        ##################################################
+        #
+        # Originates a new call
+        # INPUT: string: extension, 
+        #
+        # RETURNS: string: (status, reason)
+        ##################################################
+        def originate (self, extension):
+            try:
+                if (self._accountCallback.account.info().reg_status < 200):
+                    return "Not connected!" 
+                else:
+                    print "Dialing " "sip:"+str(extension)+"@"+config.PBX_Host;
+                    self.current_call = self._pjsua_account_handle.make_call("sip:"+str(extension)+"@"+config.PBX_Host, CallEventHandler(sip=self._sip_handle))
+                    return "Sent request"
+    
+            except pj.Error, e:
+                print "Exception: " + str(e)
+                self.lib.destroy()
+
         def __init__ (self, username, password, domain, sip_handle):
             self.username    = username
             self.domain      = domain
@@ -137,7 +160,7 @@ class Sip():
 
         def unregister(self):
             if self._pjsua_account_handle != None:
-                self._pjsua_account_handle.set_registration(renew=False)                
+                self._pjsua_account_handle.set_registration (renew=False)      
         
         @property
         def fields(self):
@@ -178,27 +201,6 @@ class Sip():
             return self.acc_cb.account.info().reg_status == 200
         
         return False
-
-    ##################################################
-    #
-    # Originates a new call
-    # INPUT: string: extension, 
-    #
-    # RETURNS: string: (status, reason)
-    ##################################################
-    def originate (self, extension):
-
-        try:
-            if (self.acc_cb.account.info().reg_status < 200):
-                return "Not connected!" 
-            else:
-                print "Dialing " "sip:"+extension+"@"+config.PBX_Host;
-                self.current_call = self.acc.make_call("sip:"+extension+"@"+config.PBX_Host, CallEventHandler(sip=self))
-                return "Sent request"
-
-        except pj.Error, e:
-            print "Exception: " + str(e)
-            self.lib.destroy()
 
     def park (self,call):
         try:

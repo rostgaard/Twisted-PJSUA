@@ -22,8 +22,7 @@ from ah_sip import NotConnected
 class HTTP_ERROR ():
     BAD_REQUEST = 400
     NOT_FOUND   = 404
-    SERVICE_UNAVAILABLE = 503
-    
+    SERVICE_UNAVAILABLE = 503    
 
 class Event_Severities ():
     Information = "Information"
@@ -69,7 +68,7 @@ class Http_Listener(Resource):
             
         logging.debug (message)
         return json.dumps ({"message" : message})
-        
+
     ######
     # call/list
     ##
@@ -149,6 +148,19 @@ class Http_Listener(Resource):
             
         logging.debug (message)
         return json.dumps ({"message" : message})
+
+    ######
+    # call/originate
+    ##
+    def pickupNextCall(self, request):
+        status = None
+        for i in self.accounts:
+            if self.accounts[i].fields["info"]["is_default"]:
+                status = self.accounts[i].originate(config.Client.next_call_extension)
+                return {"message" : "Pickup command completed.", "originate_reponse" : status}
+            else:
+                return {"message" : "No account.", "originate_reponse" : status}
+
 
     ######
     # call/originate
@@ -238,6 +250,23 @@ class Http_Listener(Resource):
                 
             return {"message" : "Account " + account + " not found.", "registration_status" : None}
 
+    ######
+    # account/unregister
+    ##
+    def unregisterAccount(self,request):
+        try:
+            account = request.args['account'][0]
+            self.accounts[account].unregister()
+            message = "Unregistration command completed."
+                
+            logging.debug (message)
+                
+            return {"message" : message}
+            
+        except KeyError:                
+            request.setResponseCode(HTTP_ERROR.NOT_FOUND)
+                
+            return {"message" : "Account " + account + " not found.", "registration_status" : None}
 
     ######
     # Error conditions
@@ -279,6 +308,9 @@ class Http_Listener(Resource):
             elif request.path == "/call/pickup":
                 response = self.pickupCall(request)
 
+            elif request.path == "/call/pickup_next":
+                response = self.pickupNextCall(request)
+
             elif request.path == "/call/originate":
                 response = self.originateCall(request)
 
@@ -294,6 +326,9 @@ class Http_Listener(Resource):
             elif request.path == "/account/list":
                 response = self.listAccount(request)
         
+            elif request.path == "/account/unregister":
+                response = self.unregisterAccount(request)
+
             elif request.path == "/account/register":
                 response = self.registerAccount(request)
             else:

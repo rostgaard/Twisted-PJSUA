@@ -82,25 +82,37 @@
 												var row = $('<tr>');
 												$('<td>').text(data[i].account).appendTo(row);
 												var status = $('<td>').text('Unknown').appendTo(row);
+												var reg_status = $('<td>').text('Never. (disconnected)').appendTo(row);
 
 												if (data[i].info) {
 													status.text(data[i].info.reg_status + ' (' + data[i].info.reg_reason + ')');
+													if(data[i].info.reg_expires === 0) {
+														reg_status.text ("Now!");
+													} else if (data[i].info.reg_expires > 1) {
+														reg_status.text(data[i].info.reg_expires + " seconds.");
+													} else if (data[i].info.reg_expires === 1) {
+														reg_status.text(data[i].info.reg_expires + " second.");
+													}
 												}
 
-												var button_td = $('<td>');
-												var button = $('<button>').attr('id', 'account_' + data[i].id).addClass("btn").text("Connect").appendTo(button_td);
-												button_td.appendTo(row);
+												var conn_button_td = $('<td>');
+												var conn_button = $('<button>').attr('id', 'account_' + data[i].id).addClass("btn").text("Connect").appendTo(conn_button_td);
+												var disconn_button_td = $('<td>');
+												var disconn_button = $('<button>').attr('id', 'account_' + data[i].id).addClass("btn").text("Disconnect").appendTo(disconn_button_td);
 
-												button.click(function() {
-													var id = $(this).parent().siblings().first().text();
-													var button = $(this);
+												conn_button_td.appendTo(row);
+												disconn_button_td.appendTo(row);
 
-													button.prop('disabled', true);
-													button.text('Connecting..');
+												conn_button.click(function() {
+													var $this = $(this);
+													$this.id = $(this).parent().siblings().first().text();
 
-													console.log("registrering account" + id);
+													$this.prop('disabled', true);
+													$this.text('Connecting..');
+
+													console.log("registrering account" + $this.id);
 													$.ajax({
-														url : 'http://' + config.PJSUA_Host + '/account/register?account=' + id,
+														url : 'http://' + config.PJSUA_Host + '/account/register?account=' + $this.id,
 														dataType : 'json',
 														statusCode : {
 															404 : function() {
@@ -108,17 +120,47 @@
 															},
 															503 : function(data) {
 																json = JSON.parse(data.responseText);
-																notify_error("Could not add account. Error:" + json.message);
+																notify_error("Could not connect account. Error:" + json.message);
 															}
 														}
 
 													}).always(function(data) {
 														console.log("Done!");
-														button.prop('disabled', false);
-														button.text('Connect');
+														$this.prop('disabled', false);
+														$this.text('Connect');
 														$("#call_list_refresh").click();
 													});
 												});
+												
+												disconn_button.click(function() {
+													var $this = $(this);
+													$this.id = $(this).parent().siblings().first().text();
+
+													$this.prop('disabled', true);
+													$this.text('Disconnecting..');
+
+													console.log("unregistrering account" + $this.id);
+													$.ajax({
+														url : 'http://' + config.PJSUA_Host + '/account/unregister?account=' + $this.id,
+														dataType : 'json',
+														statusCode : {
+															404 : function() {
+																notify_error("Could not disconnect account " + id + ". 404 Not found");
+															},
+															503 : function(data) {
+																json = JSON.parse(data.responseText);
+																notify_error("Could not disconnect account. Error:" + json.message);
+															}
+														}
+
+													}).always(function(data) {
+														console.log("Done!");
+														$this.prop('disabled', false);
+														$this.text('Disconnect');
+														$("#call_list_refresh").click();
+													});
+												});
+
 												$('#account_status').append(row);
 											}
 
@@ -134,6 +176,7 @@
 										<tr>
 											<th>Account</th>
 											<th>Status</th>
+											<th>Next Register in</th>
 											<th> </th>
 										</tr>
 									</thead>
