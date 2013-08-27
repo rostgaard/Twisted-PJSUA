@@ -10,7 +10,7 @@
 from twisted.internet import reactor
 from twisted.web.server import Site
 from twisted.web.resource import Resource
-from twisted.web2 import error as HTTP_ERROR
+#from twisted.web2 import error as HTTP_ERROR
 import sys
 import json
 import config
@@ -18,6 +18,12 @@ import ah_sip as sip
 import logging
 from pjsua import CallState, MediaState
 from ah_sip import NotConnected
+
+class HTTP_ERROR ():
+    BAD_REQUEST = 400
+    NOT_FOUND   = 404
+    SERVICE_UNAVAILABLE = 503
+    
 
 class Event_Severities ():
     Information = "Information"
