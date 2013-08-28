@@ -77,7 +77,7 @@ class Http_Listener(Resource):
         #self.sip_client._callList[:] = [call for call in self.sip_client._callList if not x.is_valid()]
         for call in (self.sip_client._callList):
             if not self.sip_client._callList[call].is_valid():
-                logging.debug ("Skipping invalid call.")
+                logging.error ("Skipping invalid call.")
                 continue
                 
             info = self.sip_client._callList[call].info()
@@ -166,7 +166,13 @@ class Http_Listener(Resource):
     # call/originate
     ##
     def originateCall(self, request):
-        status = self.sip_client.originate(request.args['extension'][0])
+        status = None
+        for i in self.accounts:
+            if self.accounts[i].fields["info"]["is_default"]:
+                status = self.accounts[i].originate(request.args['extension'][0])
+                return {"message" : "Originate command completed.", "originate_reponse" : status}
+            else:
+                return {"message" : "No account.", "originate_reponse" : status}
         return {"message" : "Originate command completed.", "originate_reponse" : status}
 
     ######
@@ -185,7 +191,7 @@ class Http_Listener(Resource):
             message = "call " + call_id + " already hung up."
             
         logging.debug (message)
-        return json.dumps ({"message" : message})
+        return {"message" : message}
 
     ######
     # account/add

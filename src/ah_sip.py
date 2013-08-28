@@ -2,13 +2,12 @@
 #
 # SIP handle module
 #
-# 2012 - Ulrik Hoerlyk Hjort
+# 2013 AdaHeads K/S
 ########################################################################
 
 import sys
 import pjsua as pj
 import threading
-import pjsua
 import config
 
 ######################################################
@@ -133,7 +132,7 @@ class Sip():
     
             except pj.Error, e:
                 print "Exception: " + str(e)
-                self.lib.destroy()
+                self._sip_handle.destroy()
 
         def __init__ (self, username, password, domain, sip_handle):
             self.username    = username

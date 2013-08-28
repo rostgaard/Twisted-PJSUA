@@ -6,14 +6,16 @@ class Client:
     next_call_extension = 5901
 
 class PBX:
-    host     = "raspberrypi"
+    #host     = "raspberrypi"
+    host     = "responsum.pbx.jay.net"
     username = "1000"
     secret   = "1234"
 
 class PJSUA:
-    log_level  = 0
+    log_level  = 2
     clock_rate = 44100 
-
+    port       = 5081
+    
 class Twisted:
     port     = 9002    
     host     = "localhost"
