@@ -274,6 +274,10 @@
 												}
 												
 												var hold_btn = $('<button>').addClass("btn").text("Park");
+												if(data[i].media_state === "LOCAL_HOLD") {
+													hold_btn.text("Release");
+												}
+												
 												$('<td>').append(hold_btn).appendTo(row);
 
 												var hangup_btn = $('<button>').addClass("btn").text("Hangup");
