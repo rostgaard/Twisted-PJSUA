@@ -15,6 +15,7 @@ class PJSUA:
     log_level  = 2
     clock_rate = 44100 
     port       = 5081
+    max_call   = 3 # Maximum number of concurrent calls.
     
 class Twisted:
     port     = 9002    

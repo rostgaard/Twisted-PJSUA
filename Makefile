@@ -27,7 +27,7 @@ pjproject_python-install: pjproject_python
 	make -C pjproject-$(PJSIP_VERSION)/pjsip-apps/src/python install
 
 pjproject: pjproject-$(PJSIP_VERSION)
-	(cd pjproject-$(PJSIP_VERSION) && ./configure --prefix=$(PREFIX) CFLAGS=-fPIC CXXFLAGS=-fPIC)
+	(cd pjproject-$(PJSIP_VERSION) && ./configure --prefix=$(PREFIX) CFLAGS=-fPIC CXXFLAGS=-fPIC --without-external-pa)
 	#(cd pjproject-$(PJSIP_VERSION) && ./configure --prefix=$(PREFIX))
 	make -C pjproject-$(PJSIP_VERSION) dep
 	make -C pjproject-$(PJSIP_VERSION)

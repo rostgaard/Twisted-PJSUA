@@ -3,11 +3,12 @@
 Hybrid of Python Twisted and PJSUA SIP library.
 The purpose of this is to provide a REST-like interface for controlling the SIP library via a browser.
 
+*NOTE:* This project is no longer being actively developed, and is provided as-is for anyone who may find is useful.
+
 ## Overall requirements 
  - python development package
  - pip
  - asound (if you want sound on Linux)
- - depenencies
 
 The following command should take care of the dependencies on Debian/Ubuntu
  sudo apt-get install python-pip libasound2-dev && \

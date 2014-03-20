@@ -4,7 +4,6 @@
 #
 # 2013 - AdaHeads K/S
 # 
-# Originally by Ulrik Hoerlyk Hjort
 ########################################################################
 
 from twisted.internet import reactor
@@ -22,6 +21,7 @@ from ah_sip import NotConnected
 class HTTP_ERROR ():
     BAD_REQUEST = 400
     NOT_FOUND   = 404
+    TIMEOUT     = 408
     SERVICE_UNAVAILABLE = 503    
 
 class Event_Severities ():
@@ -76,9 +76,15 @@ class Http_Listener(Resource):
         data = []
         #self.sip_client._callList[:] = [call for call in self.sip_client._callList if not x.is_valid()]
         for call in (self.sip_client._callList):
-            if not self.sip_client._callList[call].is_valid():
-                logging.error ("Skipping invalid call.")
-                continue
+            try:
+                if not self.sip_client._callList[call].is_valid():
+                    logging.error ("Skipping invalid call.")
+                    continue
+            except ReferenceError:
+                del self.sip_client._callList[call]
+            except KeyError:
+                request.setResponseCode(HTTP_ERROR.TIMEOUT)
+                return {"message" : "Unavailable"}
                 
             info = self.sip_client._callList[call].info()
             
@@ -167,6 +173,11 @@ class Http_Listener(Resource):
     ##
     def originateCall(self, request):
         status = None
+        
+        if len(self.sip_client._callList) == config.PJSUA.max_calls:
+            request.setResponseCode(HTTP_ERROR.TIMEOUT)
+            return {"message" : "Originate command failed.", "originate_reponse" : "Too many concurrent calls."}
+        
         for i in self.accounts:
             if self.accounts[i].fields["info"]["is_default"]:
                 status = self.accounts[i].originate(request.args['extension'][0])
